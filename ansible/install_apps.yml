@@ -66,6 +66,7 @@
     - name: Test NGINX configuration
       command: nginx -t
 
+
     # (Optional) You don't need manual Restart here since notify will handle it
     # - name: Restart NGINX
     #   systemd:

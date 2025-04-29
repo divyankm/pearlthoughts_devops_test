@@ -1,22 +1,16 @@
-FROM php:8.2-fpm
+## Used Official Minimal Base Image
+FROM yiisoftware/yii2-php:8.3-fpm-nginx
+# Expose the port used by the app (for NGINX)
+EXPOSE 80
 
-# Install necessary PHP extensions
-RUN apt-get update && apt-get install -y --no-install-recommends php8.2-mysql php8.2-gd php8.2-mbstring php8.2-xml php8.2-json
+#FROM php:8.1-fpm
+
+# Install required PHP extensions for Yii2
+#RUN apt-get update && apt-get install -y \
+#    unzip git curl zip libzip-dev \
+#    && docker-php-ext-install pdo pdo_mysql zip
 
 # Install Composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+#COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Set working directory
-WORKDIR /var/www/yii2-app
-
-# Copy application code
-COPY yii2-app/ /var/www/yii2-app
-
-# Install Yii2 dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction --working-dir=/var/www/yii2-app
-
-# Set environment variables (optional)
-ENV APPLICATION_ENV=production
-
-# Start PHP-FPM
-CMD ["php-fpm"]
+#WORKDIR /var/www/html
