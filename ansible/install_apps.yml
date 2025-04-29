@@ -37,7 +37,7 @@
 
     - name: Add NGINX config for reverse proxy to Docker container on port 8080
       copy:
-        dest: /etc/nginx/sites-available/yii2-app
+        dest: /etc/nginx/sites-available/default
         content: |
           server {
             listen 80;
@@ -53,21 +53,7 @@
           }
       notify:
         - Restart NGINX
-
-    - name: Enable the yii2-app NGINX site
-      file:
-        src: /etc/nginx/sites-available/yii2-app
-        dest: /etc/nginx/sites-enabled/yii2-app
-        state: link
-        force: yes
-
-    - name: Enable NGINX site
-      command: "ln -s /etc/nginx/sites-available/yii2-app /etc/nginx/sites-enabled/"
-      args:
-        creates: /etc/nginx/sites-enabled/yii2-app
-      notify:
-        - Restart NGINX
-
+        
     # Test NGINX configuration
     - name: Test NGINX configuration
       command: nginx -t
@@ -82,4 +68,3 @@
       systemd:
         name: nginx
         state: restarted
-        

@@ -152,16 +152,22 @@ jobs:
         chmod 600 /tmp/id_rsa
             
         echo "Connecting to EC2: $SSH_USERNAME@$EC2_PUBLIC_IP"
-        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T "$SSH_USERNAME@$EC2_PUBLIC_IP" << EOF
-          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
+        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T $SSH_USERNAME@$EC2_PUBLIC_IP << EOF
 
-          docker swarm init || echo "Swarm is already initialized"
-          docker service rm yii2-app || echo "No existing service to remove"
-          docker service create \
-              --name yii2-app \
-              --replicas 1 \
-              --publish 8080:80 \
-              ${DOCKER_USERNAME}/yii2-app:latest
+          # Check if the directory exists and remove it
+          if [ -d "/home/ubuntu/pearlthoughts_devops_test" ]; then
+            echo "Directory exists. Removing it..."
+            sudo rm -rf /home/ubuntu/pearlthoughts_devops_test
+          fi
+
+          # Create directory and clone the repository
+          mkdir -p /home/ubuntu/pearlthoughts_devops_test
+          echo "Cloning repository..."
+          git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} /home/ubuntu/pearlthoughts_devops_test
+          cd  /home/ubuntu/pearlthoughts_devops_test
+          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
+          sudo docker pull ${DOCKER_USERNAME}/yii2-app:latest
+          sudo docker stack deploy -c docker-compose.yml --with-registry-auth my_stack
         EOF
       shell: bash
       env:
