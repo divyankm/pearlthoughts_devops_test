@@ -35,8 +35,7 @@
         state: present
         update_cache: yes
 
-    # Step 3: Add NGINX config for reverse proxy
-    - name: Add NGINX config for reverse proxy
+    - name: Add NGINX config for reverse proxy to Docker container on port 8080
       copy:
         dest: /etc/nginx/sites-available/yii2-app
         content: |
@@ -45,15 +44,22 @@
             server_name _;
 
             location / {
-              proxy_pass http://127.0.0.1:80;  # Forward requests to Docker container on localhost (port 80)
-              proxy_set_header Host \$host;
-              proxy_set_header X-Real-IP \$remote_addr;
-              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-              proxy_set_header X-Forwarded-Proto \$scheme;
+              proxy_pass http://127.0.0.1:8080;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
             }
           }
       notify:
         - Restart NGINX
+
+    - name: Enable the yii2-app NGINX site
+      file:
+        src: /etc/nginx/sites-available/yii2-app
+        dest: /etc/nginx/sites-enabled/yii2-app
+        state: link
+        force: yes
 
     - name: Enable NGINX site
       command: "ln -s /etc/nginx/sites-available/yii2-app /etc/nginx/sites-enabled/"
@@ -65,7 +71,6 @@
     # Test NGINX configuration
     - name: Test NGINX configuration
       command: nginx -t
-
 
     # (Optional) You don't need manual Restart here since notify will handle it
     # - name: Restart NGINX
