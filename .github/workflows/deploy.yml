@@ -145,14 +145,16 @@ jobs:
       run: |
         docker push ${{ secrets.DOCKER_USERNAME }}/yii2-app:latest
 
-    # Step 9: Log in to EC2 and Deploy Docker container as a Swarm service
+    # Step 9:Log in to EC2 and deploy Docker container
     - name: Log in to EC2 and deploy Docker container
       run: |
         echo "${SSH_PRIVATE_KEY}" > /tmp/id_rsa
         chmod 600 /tmp/id_rsa
-            
-        echo "Connecting to EC2: $SSH_USERNAME@$EC2_PUBLIC_IP"
-        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T $SSH_USERNAME@$EC2_PUBLIC_IP << EOF
+        
+        echo "SSH Username: $SSH_USERNAME"
+        echo "EC2 Public IP: $EC2_PUBLIC_IP"
+        
+        ssh -v -i /tmp/id_rsa -o StrictHostKeyChecking=no -T $SSH_USERNAME@$EC2_PUBLIC_IP << EOF
 
           # Check if the directory exists and remove it
           if [ -d "/home/ubuntu/pearlthoughts_devops_test" ]; then
@@ -164,8 +166,14 @@ jobs:
           mkdir -p /home/ubuntu/pearlthoughts_devops_test
           echo "Cloning repository..."
           git clone https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }} /home/ubuntu/pearlthoughts_devops_test
-          cd  /home/ubuntu/pearlthoughts_devops_test
+          cd /home/ubuntu/pearlthoughts_devops_test
+
           echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
+
+          # Ensure Docker Compose is installed if not already
+          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+
           sudo docker pull ${DOCKER_USERNAME}/yii2-app:latest
           sudo docker stack deploy -c docker-compose.yml --with-registry-auth my_stack
         EOF
@@ -173,6 +181,6 @@ jobs:
       env:
         SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        EC2_PUBLIC_IP: ${{ env.EC2_PUBLIC_IP }}
+        EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
