@@ -78,12 +78,6 @@
     #     name: nginx
     #     state: restarted
 
-    # Initialize Docker Swarm (if not already initialized)
-    - name: Initialize Docker Swarm mode (if not initialized)
-      command: docker swarm init
-      ignore_errors: yes
-      when: ansible_facts['distribution_version'] is version('18.04', '>=')
-
   handlers:
     - name: Restart NGINX
       systemd:

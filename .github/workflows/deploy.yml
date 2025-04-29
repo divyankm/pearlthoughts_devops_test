@@ -146,23 +146,27 @@ jobs:
         docker push ${{ secrets.DOCKER_USERNAME }}/yii2-app:latest
 
     # Step 9: Log in to EC2 and Deploy Docker container as a Swarm service
-    - name: Log in to EC2 and deploy Docker container as a Swarm service
+    - name: Log in to EC2 and deploy Docker container
       run: |
-        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T ${{ secrets.SSH_USERNAME }}@$EC2_PUBLIC_IP << EOF
-          echo ${{ secrets.DOCKER_PASSWORD }} | docker login --username ${{ secrets.DOCKER_USERNAME }} --password-stdin
+        echo "${SSH_PRIVATE_KEY}" > /tmp/id_rsa
+        chmod 600 /tmp/id_rsa
+
+        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T "${SSH_USERNAME}@${EC2_PUBLIC_IP}" << EOF
+          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
 
           docker swarm init || echo "Swarm is already initialized"
-
           docker service rm yii2-app || echo "No existing service to remove"
-
           docker service create \
-            --name yii2-app \
-            --replicas 1 \
-            --publish 8080:80 \
-            ${{ secrets.DOCKER_USERNAME }}/yii2-app:latest
+              --name yii2-app \
+              --replicas 1 \
+              --publish 8080:80 \
+              ${DOCKER_USERNAME}/yii2-app:latest
+          fi
         EOF
+      shell: bash
       env:
-        EC2_PUBLIC_IP: ${{ env.EC2_PUBLIC_IP }}
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        EC2_PUBLIC_IP: ${{ env.EC2_PUBLIC_IP }}
         DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
