@@ -77,9 +77,9 @@
     #   systemd:
     #     name: nginx
     #     state: restarted
-
   handlers:
     - name: Restart NGINX
       systemd:
         name: nginx
         state: restarted
+        

@@ -150,8 +150,9 @@ jobs:
       run: |
         echo "${SSH_PRIVATE_KEY}" > /tmp/id_rsa
         chmod 600 /tmp/id_rsa
-
-        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T "${SSH_USERNAME}@${EC2_PUBLIC_IP}" << EOF
+            
+        echo "Connecting to EC2: $SSH_USERNAME@$EC2_PUBLIC_IP"
+        ssh -i /tmp/id_rsa -o StrictHostKeyChecking=no -T "$SSH_USERNAME@$EC2_PUBLIC_IP" << EOF
           echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
 
           docker swarm init || echo "Swarm is already initialized"
@@ -161,7 +162,6 @@ jobs:
               --replicas 1 \
               --publish 8080:80 \
               ${DOCKER_USERNAME}/yii2-app:latest
-          fi
         EOF
       shell: bash
       env:
