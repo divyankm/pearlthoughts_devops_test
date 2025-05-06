@@ -7,7 +7,7 @@ on:
     paths:
       - 'terraform/**'  # Trigger only if there are changes in the terraform directory
       - 'ansible/**'  # Trigger only if there are changes in the ansible directory
-      - '.github/workflows/deploy.yml'  # Trigger only if there are changes to the deploy.yml workflow file
+      # - '.github/workflows/deploy.yml'  # Trigger only if there are changes to the deploy.yml workflow file
 
 jobs:
   full_deployment:
@@ -178,12 +178,15 @@ jobs:
 
           echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
 
-          # Ensure Docker Compose is installed if not already
-          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-
           sudo docker pull ${DOCKER_USERNAME}/yii2-app:latest
           sudo docker stack deploy -c docker-compose.yml --with-registry-auth my_stack
+          # Check if the project directory already exists
+          if [ -d "/myapp" ]; then
+            echo "/myapp directory already exists. Skipping Yii2 setup."
+          else
+            echo "/myapp directory not found. Create Composer File Setup"
+            sudo docker-compose exec yii2 composer create-project --prefer-dist yiisoft/yii2-app-basic /myapp
+          fi
         EOF
       shell: bash
       env:
